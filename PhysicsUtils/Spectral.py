@@ -2,9 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import copy as cp
-
-def Test():
-    print("Here")
+from PhysicsUtils import Utilities
 
 class SpectralPlotter:
 
@@ -13,6 +11,7 @@ class SpectralPlotter:
         options = SpectralPlotter.process_optional_params(options)
         self.buffer = options[0]
         self.title = options[1]
+        self.figsize = options[2]
 
         pix, int = np.genfromtxt(data_file, usecols = [0, 1], unpack = True, invalid_raise = False)
         pix = pix[~np.isnan(pix)] # Remove nan
@@ -50,11 +49,13 @@ class SpectralPlotter:
     
     def plot_centroids(self, n=3):
         """This will plot the top 'n' centroids. It returns a list of each centroid average location (Pixel #)."""
-        fig, ax = plt.subplots(n, figsize=(10, 10)) # Make plots for each centroid + combined plot.
+        fig, ax = plt.subplots(n, figsize=(self.figsize[0], self.figsize[1] * n)) # Make plots for each centroid + combined plot.
         
         self.order_centroid_locations(n) # Get all n centroid locations.
         
         self.centroid_locations = np.array([]) # Pixel #s of centroids.
+        self.centroid_color_map = {}
+        random_colors = Utilities.get_random_colors(n)
 
         for i in range(n):
             current_domain = self.get_a_centroid_domin(max_value=self.max_intensity_ordered[i])
@@ -63,7 +64,10 @@ class SpectralPlotter:
             # Plot individual centroids zoomed in.
             ax[i].plot(self.pixel_data, self.intensity_data)
             ax[i].set_xlim(self.pixel_data[current_domain[0]], self.pixel_data[current_domain[1]])
-            ax[i].axvline(current_domain[2], color='red')
+            
+            self.centroid_color_map[current_domain[2]] = random_colors[i]
+            
+            ax[i].axvline(current_domain[2], color=random_colors[i])
             ax[i].set_xlabel('Pixel # (' + str(current_domain[2]) + ')')
             ax[i].set_ylabel('Intensity')
             ax[i].set_title(self.title + " " + str(i + 1))
@@ -75,12 +79,12 @@ class SpectralPlotter:
     
     def plot_spectrum(self):
         """This will plot the entire spectrum."""
-        fig, ax = plt.subplots(1, figsize=(10, 5))
+        fig, ax = plt.subplots(1, figsize=self.figsize)
         # Plot the whole spectrum.
         ax.plot(self.pixel_data, self.intensity_data)
         # Make a line at each peek represented here.
         for location in self.centroid_locations:
-            ax.axvline(location, color='red')
+            ax.axvline(location, color=self.centroid_color_map[location], alpha=0.75)
         ax.set_xlabel('Pixel #')
         ax.set_ylabel('Intensity')
         ax.set_title('Total Spectrum of ' + self.title)
@@ -91,10 +95,12 @@ class SpectralPlotter:
     @staticmethod
     def process_optional_params(options):
         """This will return a list of all the optional paramater values. [buffer, title]"""
-        return_list = [10, ""]
+        return_list = [10, "", (9, 3)]
         for key, value in options.items(): # Process optional paramaters.
             if key == "buffer":
                 return_list[0] = value
             elif key == "title":
                 return_list[1] = value
+            elif key == "figsize":
+                return_list[2] = value
         return return_list
