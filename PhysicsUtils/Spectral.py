@@ -94,7 +94,7 @@ class SpectralPlotter:
 
     @staticmethod
     def process_optional_params(options):
-        """This will return a list of all the optional paramater values. [buffer, title]"""
+        """This will return a list of all the optional paramater values. [buffer, title, figure size]"""
         return_list = [10, "", (9, 3)]
         for key, value in options.items(): # Process optional paramaters.
             if key == "buffer":
